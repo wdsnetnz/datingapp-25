@@ -1,5 +1,6 @@
 using System;
 using API.Data;
+using API.DTOs;
 using API.Entities;
 using API.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,23 @@ public class DatingRepository : IDatingRepository, IDisposable
     public async Task<IReadOnlyList<AppUser>> GetMembersAsync()
     {
        return await _context.Users.ToListAsync();
+    }   
+
+    public async Task<bool> RegisterUserAsync(AppUser user)
+    {
+        _context.Users.Add(user);
+        return await _context.SaveChangesAsync().ContinueWith(t => t.Result > 0); 
+    }
+
+    public async Task<bool> EmailExistsAsync(string email)
+    {
+        return await _context.Users.AnyAsync(u => u.Email.ToLower() == email.ToLower());
+    }
+
+    public async Task<AppUser?> GetUserAsync(string email)
+    {
+        return await _context.Users
+            .SingleOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
     }
 
     public void Dispose()

@@ -1,12 +1,12 @@
 using API.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")] // localhost:5000/api/members
-    [ApiController]
-    public class MembersController : ControllerBase
+    // Route: is now in base controller  localhost:5000/api/members
+    public class MembersController : BaseController
     {
         private readonly ILogger<MembersController> _logger;
         private readonly IDatingService _datingService;
@@ -24,6 +24,7 @@ namespace API.Controllers
             return Ok(members);
         }
 
+        [Authorize]
         [HttpGet("{id}")] // localhost:5000/api/members/3
         public async Task<ActionResult> GetMember(string id)
         {
