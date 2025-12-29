@@ -40,10 +40,11 @@ public class DatingRepository : IDatingRepository, IDisposable
        return await _context.Users.ToListAsync();
     }   
 
-    public async Task<bool> RegisterUserAsync(AppUser user)
+    public async Task<AppUser> RegisterUserAsync(AppUser user)
     {
         _context.Users.Add(user);
-        return await _context.SaveChangesAsync().ContinueWith(t => t.Result > 0); 
+        await _context.SaveChangesAsync();
+        return user;
     }
 
     public async Task<bool> EmailExistsAsync(string email)

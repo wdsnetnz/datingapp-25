@@ -24,7 +24,7 @@ public class DatingService : IDatingService
         return _datingRepository.GetMembersAsync();
     }
 
-    public async Task<bool> RegisterUserAsync(AppUser user)
+    public async Task<AppUser> RegisterUserAsync(AppUser user)
     {
         return await _datingRepository.RegisterUserAsync(user);
     }

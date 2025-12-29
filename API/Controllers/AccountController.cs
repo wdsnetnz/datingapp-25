@@ -22,7 +22,7 @@ public class AccountController : BaseController
     }
 
     [HttpPost("register")] // POST: api/account/register        
-    public async Task<ActionResult> Register(RegisterDto registerDto)
+    public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
     {
         // check if email exists
         if (await _datingService.EmailExistsAsync(registerDto.Email))
@@ -43,7 +43,7 @@ public class AccountController : BaseController
 
         await _datingService.RegisterUserAsync(user);
 
-        return Ok();
+        return user.ToUserDto(_tokenService);
     }
 
     [HttpPost("login")] // POST: api/account/login        
