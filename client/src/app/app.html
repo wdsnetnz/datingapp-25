@@ -1,3 +1,15 @@
 <app-nav/>
 
-<app-home />
+<!-- This is a comment Angular style guide recommended -->
+<!-- https://angular.io/guide/styleguide#style-05-14 -->
+<div
+    [class.mt-24]="router.url !== '/'"
+    [class.container]="router.url !== '/'"
+    [class.mx-auto]="router.url !== '/'"
+>
+    <router-outlet/>
+</div>
+
+ <!-- <div [ngClass]="{'mt-24 container mx-auto': !(router.url === '/')}">
+    <router-outlet/>
+</div> -->
