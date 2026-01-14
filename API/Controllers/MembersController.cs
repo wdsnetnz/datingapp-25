@@ -6,34 +6,51 @@ using Microsoft.AspNetCore.Mvc;
 namespace API.Controllers
 {
     // Route: is now in base controller  localhost:5000/api/members
+    [Authorize]
     public class MembersController : BaseController
     {
         private readonly ILogger<MembersController> _logger;
-        private readonly IDatingService _datingService;
-
-        public MembersController(ILogger<MembersController> logger, IDatingService datingService)
+        
+        private readonly IMemberService _memberService;
+        public MembersController(ILogger<MembersController> logger, IMemberService memberService)
         {
-            _logger = logger;
-            _datingService = datingService;
+            _logger = logger;           
+            _memberService = memberService;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetMembers()
         {
-            var members = await _datingService.GetMembersAsync();
+            var members = await _memberService.GetMembersAsync();
             return Ok(members);
         }
 
-        [Authorize]
         [HttpGet("{id}")] // localhost:5000/api/members/3
         public async Task<ActionResult> GetMember(string id)
         {
-            var member = await _datingService.GetMemberAsync(id);
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Member ID is required.");
+            }
+
+            var member = await _memberService.GetMemberAsync(id);
             if (member == null)
             {
                 return NotFound();
             }
             return Ok(member);
+        }
+
+        [HttpGet("{id}/photos")]
+        public async Task<ActionResult> GetPhotosForMember(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest("Member ID is required.");
+            }
+
+            var photos = await _memberService.GetPhotosForMemberAsync(id);
+            return Ok(photos);
         }
     }
 }
