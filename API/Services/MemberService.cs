@@ -18,6 +18,11 @@ public class MemberService : IMemberService
         return _memberRepository.GetMemberAsync(id);
     }
 
+    public Task<Member?> GetMemberForUpdate(string id)
+    {
+       return _memberRepository.GetMemberForUpdate(id);
+    }
+
     public Task<IReadOnlyList<Member>> GetMembersAsync()
     {
         return _memberRepository.GetMembersAsync();
@@ -37,5 +42,11 @@ public class MemberService : IMemberService
     {
         _memberRepository.Update(member);
     
+    }
+
+    public Task<bool> UpdateMemberAsync(Member member)
+    {
+        _memberRepository.Update(member);
+        return _memberRepository.SaveAllAsync();
     }
 }

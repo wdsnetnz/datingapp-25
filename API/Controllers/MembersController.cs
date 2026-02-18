@@ -1,3 +1,6 @@
+using System.Security.Claims;
+using API.DTOs;
+using API.Extensions;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -51,6 +54,40 @@ namespace API.Controllers
 
             var photos = await _memberService.GetPhotosForMemberAsync(id);
             return Ok(photos);
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> UpdateMember(MemberUpdateDto memberUpdateDto){
+            var memberId = User.GetMemberId();
+            
+            //var memberId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            if (string.IsNullOrEmpty(memberId))
+            {
+                return BadRequest("Member ID is required.");
+            }
+
+            var member = await _memberService.GetMemberForUpdate(memberId);
+            if (member == null)
+            {
+                return NotFound("Member not found.");
+            }
+
+            member.DisplayName = memberUpdateDto.DisplayName ?? member.DisplayName;
+            member.Description = memberUpdateDto.Description ?? member.Description;
+            member.City = memberUpdateDto.City ?? member.City;
+            member.Country = memberUpdateDto.Country ?? member.Country;
+
+            member.User.DisplayName = memberUpdateDto.DisplayName ?? member.User.DisplayName;
+
+            var result = await _memberService.UpdateMemberAsync(member);
+            if (!result)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Failed to update member.");
+            }
+
+            return NoContent();
+
         }
     }
 }

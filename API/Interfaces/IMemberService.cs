@@ -11,4 +11,7 @@ public interface IMemberService
     Task<Member> GetMemberAsync(string id);
 
     Task<IReadOnlyList<Photo>> GetPhotosForMemberAsync(string memberId);
+    Task<bool> UpdateMemberAsync(Member member);
+
+    Task<Member?> GetMemberForUpdate(string id);
 }
