@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using API.DTOs;
+using API.Entities;
 using API.Extensions;
 using API.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -15,10 +16,13 @@ namespace API.Controllers
         private readonly ILogger<MembersController> _logger;
         
         private readonly IMemberService _memberService;
-        public MembersController(ILogger<MembersController> logger, IMemberService memberService)
+        private readonly IPhotoService _photoService;
+
+        public MembersController(ILogger<MembersController> logger, IMemberService memberService, IPhotoService photoService)
         {
             _logger = logger;           
             _memberService = memberService;
+            _photoService = photoService;
         }
 
         [HttpGet]
@@ -60,7 +64,7 @@ namespace API.Controllers
         public async Task<ActionResult> UpdateMember(MemberUpdateDto memberUpdateDto){
             var memberId = User.GetMemberId();
             
-            //var memberId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            // var memberId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             if (string.IsNullOrEmpty(memberId))
             {
@@ -87,7 +91,105 @@ namespace API.Controllers
             }
 
             return NoContent();
+        }
 
+        [HttpPost("add-photo")]
+        public async Task<ActionResult<Photo>> AddPhoto([FromForm]IFormFile file)
+        {
+            var member = await _memberService.GetMemberForUpdate(User.GetMemberId());
+
+            if (member == null)
+            {
+                return BadRequest("Member not found.");
+            }
+
+            var result = await _photoService.UploadPhotoAsync(file);           
+
+            if (result.Error != null)
+            {
+                return BadRequest(result.Error.Message);
+            }
+
+            var photo = new Photo
+            {
+                Url = result.SecureUrl.AbsoluteUri,
+                PublicId = result.PublicId,
+                MemberId = User.GetMemberId()
+            };
+
+            if(member.ImageUrl == null)
+            {
+                member.ImageUrl = photo.Url;
+                member.User.ImageUrl = photo.Url;                
+            }
+
+            member.Photos.Add(photo);
+
+            if(await _memberService.SaveAllAsync()) return photo;          
+
+            return BadRequest("Problem adding photo");
+        }
+
+        [HttpPut("set-main-photo/{photoId}")]
+        public async Task<ActionResult> SetMainPhoto(int photoId)
+        {
+            var member = await _memberService.GetMemberForUpdate(User.GetMemberId());
+
+            if (member == null)
+            {
+                return BadRequest("Member not found.");
+            }
+
+            var photo = member.Photos.SingleOrDefault(p => p.Id == photoId);
+
+            if (member.ImageUrl == photo?.Url || photo == null)
+            {
+                return NotFound("Photo not found.");
+            }
+
+            member.ImageUrl = photo.Url;
+            member.User.ImageUrl = photo.Url;
+
+            var result = await _memberService.SaveAllAsync();
+            if (!result)
+            {
+                return BadRequest("Failed to set main photo.");
+            }
+
+            return NoContent();
+        }
+
+        [HttpDelete("delete-photo/{photoId}")]
+        public async Task<ActionResult> DeletePhoto(int photoId)
+        {
+            var member = await _memberService.GetMemberForUpdate(User.GetMemberId());
+
+            if (member == null)
+            {
+                return BadRequest("Member not found.");
+            }
+
+            var photo = member.Photos.SingleOrDefault(p => p.Id == photoId);
+
+            if (photo == null || member.ImageUrl == photo.Url)
+            {
+                return BadRequest("This photo is the main photo and cannot be deleted.");
+            }
+
+            if (photo.PublicId != null)
+            {
+                var result = await _photoService.DeletePhotoAsync(photo.PublicId);
+                if (result.Error != null)
+                {
+                    return BadRequest($"{result.Error.Message} Failed to delete photo.");
+                }
+            }
+
+            member.Photos.Remove(photo);
+
+            if(await _memberService.SaveAllAsync()) return Ok();
+
+            return BadRequest("Failed to delete photo.");
         }
     }
 }

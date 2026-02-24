@@ -1,5 +1,6 @@
 using System.Text;
 using API.Data;
+using API.Helpers;
 using API.Interfaces;
 using API.Middleware;
 using API.Repositories;
@@ -25,15 +26,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IDatingRepository, DatingRepository>();
 builder.Services.AddScoped<IDatingService, DatingService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPhotoService, PhotoService>();
 builder.Services.AddScoped<IMemberRepository, MemberRepository>();
 builder.Services.AddScoped<IMemberService, MemberService>();
 
+builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("CloudinarySettings"));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        var tokenKey = builder.Configuration["TokenKey"] ?? 
-        throw new Exception("TokenKey is not configured - Program.cs");
+        var tokenKey = builder.Configuration["TokenKey"] 
+        ?? throw new Exception("TokenKey is not configured - Program.cs");
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
